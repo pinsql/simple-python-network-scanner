@@ -25,6 +25,8 @@ def get_arguments():
     # Setting up a command-line interface because hardcoding is soooo 2003
     parser = argparse.ArgumentParser(description="Scan your local network and be nosy")
     parser.add_argument("-t", "--target", dest="target", type=parse_target, help="Target IP / IP range. Example: 192.168.1.1/24")
+    parser.add_argument("-i", "--iface", dest="iface", help="Interface to send from (default: scapy picks)")
+    parser.add_argument("--timeout", type=float, default=2, help="Seconds to wait for replies (default: 2)")
     args = parser.parse_args()
     if not args.target:
         # You had one job... give me an IP range!
@@ -36,7 +38,7 @@ def require_root():
     if hasattr(os, "geteuid") and os.geteuid() != 0:
         sys.exit("[!] need root for raw packets. try: sudo python3 network_scanner.py -t <range>")
 
-def scan(ip):
+def scan(ip, timeout=2, iface=None):
     # Creating an ARP request packet... basically yelling "Who's there?" on the network
     arp_request = ARP(pdst=ip)
     
@@ -47,7 +49,7 @@ def scan(ip):
     arp_request_broadcast = broadcast / arp_request
     
     # Send the packet and get answers back (timeout in case some devices are napping)
-    answered_list = srp(arp_request_broadcast, timeout=2, verbose=False)[0]
+    answered_list = srp(arp_request_broadcast, timeout=timeout, iface=iface, verbose=False)[0]
     
     # Making a list of the cool kids who replied
     clients_list = []
@@ -70,5 +72,5 @@ def print_result(results_list):
 if __name__ == "__main__":
     args = get_arguments()
     require_root()
-    scan_result = scan(args.target)
+    scan_result = scan(args.target, timeout=args.timeout, iface=args.iface)
     print_result(scan_result)
