@@ -23,14 +23,14 @@ def parse_target(target):
         raise argparse.ArgumentTypeError("ARP only speaks IPv4, give me an IPv4 range")
     return str(network)
 
-def get_arguments():
+def get_arguments(argv=None):
     # Setting up a command-line interface because hardcoding is soooo 2003
     parser = argparse.ArgumentParser(description="Scan your local network and be nosy")
     parser.add_argument("-t", "--target", dest="target", type=parse_target, help="Target IP / IP range. Example: 192.168.1.1/24")
     parser.add_argument("-i", "--iface", dest="iface", help="Interface to send from (default: scapy picks)")
     parser.add_argument("--timeout", type=float, default=2, help="Seconds to wait for replies (default: 2)")
     parser.add_argument("--json", action="store_true", help="Print results as JSON (pipe it into jq)")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if not args.target:
         # You had one job... give me an IP range!
         parser.error("Please specify a target IP range, use --help for more info.")
@@ -77,12 +77,15 @@ def print_result(results_list):
     for client in results_list:
         print(f"{client['ip']}\t\t{client['mac']}")
 
-# Entry point: because Python needs to know where to start being awesome
-if __name__ == "__main__":
-    args = get_arguments()
+def main(argv=None):
+    args = get_arguments(argv)
     require_root()
     scan_result = scan(args.target, timeout=args.timeout, iface=args.iface)
     if args.json:
         print(json.dumps(scan_result, indent=2))
     else:
         print_result(scan_result)
+
+# Entry point: because Python needs to know where to start being awesome
+if __name__ == "__main__":
+    main()
