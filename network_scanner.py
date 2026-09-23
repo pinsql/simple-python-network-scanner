@@ -5,6 +5,8 @@
 
 import argparse
 import ipaddress
+import os
+import sys
 
 from scapy.all import ARP, Ether, srp
 
@@ -28,6 +30,11 @@ def get_arguments():
         # You had one job... give me an IP range!
         parser.error("Please specify a target IP range, use --help for more info.")
     return args
+
+def require_root():
+    # Raw sockets are root-only. A one-liner beats a PermissionError wall of text
+    if hasattr(os, "geteuid") and os.geteuid() != 0:
+        sys.exit("[!] need root for raw packets. try: sudo python3 network_scanner.py -t <range>")
 
 def scan(ip):
     # Creating an ARP request packet... basically yelling "Who's there?" on the network
@@ -62,5 +69,6 @@ def print_result(results_list):
 # Entry point: because Python needs to know where to start being awesome
 if __name__ == "__main__":
     args = get_arguments()
+    require_root()
     scan_result = scan(args.target)
     print_result(scan_result)
