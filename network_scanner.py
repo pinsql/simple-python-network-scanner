@@ -59,9 +59,15 @@ def scan(ip, timeout=2, iface=None):
             "mac": element[1].hwsrc
         }
         clients_list.append(client_dict)
+
+    # Sort numerically so .10 doesn't land before .9
+    clients_list.sort(key=lambda c: ipaddress.ip_address(c["ip"]))
     return clients_list
 
 def print_result(results_list):
+    if not results_list:
+        print("🦗 Nobody answered. Empty network, wrong range, or everyone's hiding.")
+        return
     print("📡 Devices on the network (aka your neighbors?):\n")
     print("IP Address\t\tMAC Address")
     print("-----------------------------------------")
