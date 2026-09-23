@@ -11,6 +11,7 @@ import sys
 
 from scapy.all import ARP, Ether, srp
 
+
 def parse_target(target):
     # Accept a single IP or a CIDR range; reject garbage before scapy chokes on it
     try:
