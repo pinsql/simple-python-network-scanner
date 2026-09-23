@@ -3,13 +3,26 @@
 # Simple Network Scanner
 # Because who doesn't like peeking at who's on the Wi-Fi?
 
-from scapy.all import ARP, Ether, srp
 import argparse
+import ipaddress
+
+from scapy.all import ARP, Ether, srp
+
+def parse_target(target):
+    # Accept a single IP or a CIDR range; reject garbage before scapy chokes on it
+    try:
+        network = ipaddress.ip_network(target, strict=False)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"'{target}' isn't an IP or CIDR range (try 192.168.1.0/24)") from None
+    if network.version != 4:
+        # ARP is an IPv4 thing. IPv6 uses neighbor discovery, different party
+        raise argparse.ArgumentTypeError("ARP only speaks IPv4, give me an IPv4 range")
+    return str(network)
 
 def get_arguments():
     # Setting up a command-line interface because hardcoding is soooo 2003
     parser = argparse.ArgumentParser(description="Scan your local network and be nosy")
-    parser.add_argument("-t", "--target", dest="target", help="Target IP / IP range. Example: 192.168.1.1/24")
+    parser.add_argument("-t", "--target", dest="target", type=parse_target, help="Target IP / IP range. Example: 192.168.1.1/24")
     args = parser.parse_args()
     if not args.target:
         # You had one job... give me an IP range!
